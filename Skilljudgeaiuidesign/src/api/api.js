@@ -122,8 +122,7 @@ export const analyzeRole = async (resumeId, role) => {
     
     const result = await safeParse(res);
     console.log("[API] Role analysis full response:", result);
-    const gapsCount = result?.gaps?.length ?? 0;
-    const nonNegotiableCount = result?.non_negotiable?.length ?? 0;
+    
 
     console.log("[API] Role analysis completed, target_role:", result?.target_role, "readiness_score:", result?.readiness_score, "gaps:", result?.gaps?.length ?? 0, "non_negotiable:", result?.non_negotiable?.length ?? 0);
 
