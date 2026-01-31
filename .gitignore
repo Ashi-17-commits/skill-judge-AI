@@ -1,1 +1,26 @@
 .env
+
+# Frontend
+Skilljudgeaiuidesign/node_modules/
+Skilljudgeaiuidesign/dist/
+Skilljudgeaiuidesign/.env.local
+Skilljudgeaiuidesign/.env.*.local
+
+# Backend
+skill-judge-ai-backend/.venv/
+skill-judge-ai-backend/.env
+skill-judge-ai-backend/app/uploads/
+skill-judge-ai-backend/__pycache__/
+skill-judge-ai-backend/*.pyc
+skill-judge-ai-backend/.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
