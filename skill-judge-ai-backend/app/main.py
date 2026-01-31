@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.resume import router as resume_router
 from app.api.role import router as role_router
-from app.core.config import settings
+from app.core.config import get_cors_origins, settings
 from app.core.database import db_client
 
 
@@ -25,17 +25,7 @@ def create_app() -> FastAPI:
         ),
     )
 
-    # CORS configuration - Allow only deployed frontend and localhost for development
-    allowed_origins = [
-        "https://skill-judge-ai-86rg.onrender.com",  # Production frontend
-        "http://localhost:5173",  # Local development
-        "http://localhost:5174",  # Local development (fallback port)
-        "http://localhost:5175",  # Local development (fallback port)
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5175",
-    ]
-
+    allowed_origins = get_cors_origins()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
@@ -62,6 +52,11 @@ def create_app() -> FastAPI:
             print(f"[API REQUEST] {request.method} {request.url.path} from {origin}")
         response = await call_next(request)
         return response
+
+    @app.get("/health", include_in_schema=False)
+    async def health() -> JSONResponse:
+        """Lightweight health check for Render and load balancers."""
+        return JSONResponse(status_code=200, content={"status": "ok"})
 
     @app.on_event("startup")
     async def on_startup() -> None:
@@ -189,4 +184,14 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=False,
+    )
 

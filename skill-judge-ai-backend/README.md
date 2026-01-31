@@ -94,6 +94,21 @@ From the project root (`skill-judge-ai-backend`):
 uvicorn app.main:app --reload
 ```
 
+For **Render** or any host that sets `PORT`: bind to `0.0.0.0` and use `PORT`:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Or run as module (uses `HOST` and `PORT` from env):
+
+```bash
+python -m app.main
+```
+
+Set `CORS_ORIGINS` to your frontend URL(s), comma-separated (e.g. `https://your-app.onrender.com`).  
+Health check: `GET /health` → `{"status":"ok"}`.
+
 The API will be available at:
 
 - Swagger UI: `http://localhost:8000/docs`

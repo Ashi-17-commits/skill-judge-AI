@@ -86,18 +86,34 @@
         var formData = new FormData();
         formData.append('file', file);
 
-        fetch('/api/resume/upload', { method: 'POST', body: formData })
-          .then(function(res) { return res.json().then(function(body) { return { ok: res.ok, body: body }; }); })
+        var apiBase = (typeof window !== 'undefined' && window.__API_BASE__ != null) ? String(window.__API_BASE__).trim() : '';
+        var url = apiBase + '/api/resume/upload';
+        console.log('[evaluate] POST', url);
+
+        fetch(url, { method: 'POST', body: formData, credentials: 'include' })
+          .then(function(res) {
+            return res.text().then(function(text) {
+              var body = null;
+              if (text && text.trim()) {
+                try { body = JSON.parse(text); } catch (e) { body = { message: text || 'Invalid response' }; }
+              } else {
+                body = { message: 'Empty response from server (' + res.status + ')' };
+              }
+              return { ok: res.ok, body: body };
+            });
+          })
           .then(function(_ref) {
             var ok = _ref.ok;
             var body = _ref.body;
             btn.disabled = false;
             if (ok) showResult(body);
-            else showError(body.message || 'Upload failed.');
+            else showError(body && (body.message || body.error) ? (body.message || body.error) : 'Upload failed.');
           })
           .catch(function(err) {
             btn.disabled = false;
-            showError(err && err.message ? err.message : 'Network or server error.');
+            var msg = err && err.message ? err.message : 'Network or server error. Check connection and CORS.';
+            console.error('[evaluate]', msg);
+            showError(msg);
           });
       });
     })();

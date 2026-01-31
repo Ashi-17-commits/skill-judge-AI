@@ -60,7 +60,7 @@ async def upload_resume(
     - Optionally use Groq to rewrite verdict/summary only
     - Return overall_score, verdict, summary, score_breakdown (frontend contract)
     """
-
+    print("[RESUME UPLOAD] Endpoint hit")
     try:
         original_filename = file.filename or "resume"
         extension = Path(original_filename).suffix.lower()
@@ -167,14 +167,13 @@ async def upload_resume(
         )
 
     except HTTPException:
-        # Re-raise HTTP exceptions (already have proper error responses)
         raise
     except Exception as exc:
-        # Catch any unexpected errors and return valid JSON
-        print(f"ERROR in upload_resume: {exc}")
+        print(f"[RESUME UPLOAD] Error: {exc}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error processing resume: {str(exc)}",
-        ) from exc
+            content={"success": False, "error": str(exc), "message": str(exc)},
+            headers={"Content-Type": "application/json"},
+        )
