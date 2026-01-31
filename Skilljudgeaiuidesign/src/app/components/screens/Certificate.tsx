@@ -4,7 +4,7 @@ import { Download, Share2 } from "lucide-react";
 
 export default function Certificate() {
   const recipientName = "Alex Morgan";
-  const roleAchieved = "Senior Software Engineer";
+  const roleAchieved = "Software Engineer";
   const completionDate = "January 27, 2026";
   const certificateId = "SKJ-2026-001847";
 

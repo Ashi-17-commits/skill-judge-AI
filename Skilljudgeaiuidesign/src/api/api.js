@@ -121,7 +121,8 @@ export const analyzeRole = async (resumeId, role) => {
     }
     
     const result = await safeParse(res);
-    console.log(`[API] Role analysis completed, readiness_score: ${result.readiness_score}`);
+    console.log("[API] Role analysis full response:", result);
+    console.log("[API] Role analysis completed, target_role:", result?.target_role, "readiness_score:", result?.readiness_score, "gaps:", result?.gaps?.length ?? 0, "non_negotiable:", result?.non_negotiable?.length ?? 0);
     return result;
   } catch (error) {
     let message = error instanceof Error ? error.message : "Unknown error analyzing role";

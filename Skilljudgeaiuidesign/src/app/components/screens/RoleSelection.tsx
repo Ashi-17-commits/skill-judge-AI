@@ -6,40 +6,40 @@ import { Check, ChevronRight } from "lucide-react";
 
 const roles = [
   {
-    title: "Senior Software Engineer",
-    level: "Senior",
+    title: "Software Engineer",
+    level: "Early Career",
     category: "Engineering",
-    description: "Full-stack development with 5+ years experience"
+    description: "Foundational full-stack development and core programming"
   },
   {
     title: "Product Manager",
-    level: "Mid-Senior",
+    level: "Early Career",
     category: "Product",
-    description: "Product strategy and roadmap ownership"
+    description: "Product fundamentals and early-stage feature ownership"
   },
   {
     title: "Data Scientist",
-    level: "Mid-Level",
+    level: "Early Career",
     category: "Data & Analytics",
-    description: "Machine learning and statistical analysis"
+    description: "Entry-level data analysis and machine learning concepts"
   },
   {
     title: "UX Designer",
-    level: "Mid-Level",
+    level: "Early Career",
     category: "Design",
-    description: "User research and interface design"
+    description: "User research fundamentals and design thinking"
   },
   {
     title: "Engineering Manager",
-    level: "Management",
+    level: "Early Career",
     category: "Engineering Leadership",
-    description: "Team leadership and technical direction"
+    description: "Team collaboration and foundational leadership skills"
   },
   {
     title: "DevOps Engineer",
-    level: "Mid-Senior",
+    level: "Early Career",
     category: "Infrastructure",
-    description: "CI/CD, cloud infrastructure, and automation"
+    description: "CI/CD basics and cloud infrastructure fundamentals"
   },
 ];
 

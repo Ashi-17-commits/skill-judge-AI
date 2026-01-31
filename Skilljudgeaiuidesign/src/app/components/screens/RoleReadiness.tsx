@@ -12,6 +12,8 @@ export default function RoleReadiness() {
   const location = useLocation();
   const [displayPercentage, setDisplayPercentage] = useState(0);
   const [targetPercentage, setTargetPercentage] = useState(0);
+  const [targetRole, setTargetRole] = useState<string>("");
+  const [verdict, setVerdict] = useState<string>("");
   const [strengths, setStrengths] = useState<string[]>([]);
   const [gaps, setGaps] = useState<string[]>([]);
   const [nonNegotiable, setNonNegotiable] = useState<any[]>([]);
@@ -29,20 +31,41 @@ export default function RoleReadiness() {
     }
 
     const fetchRoleAnalysis = async () => {
+      setLoading(true);
+      setError(null);
+      setTargetPercentage(0);
+      setDisplayPercentage(0);
+      setTargetRole("");
+      setVerdict("");
+      setStrengths([]);
+      setGaps([]);
+      setNonNegotiable([]);
+
       try {
-        console.log("Fetching role analysis for role:", role, "resume_id:", resume_id);
+        console.log("[RoleReadiness] User selected role:", role, "resume_id:", resume_id);
         const data = await analyzeRole(resume_id, role);
-        console.log("Role analysis data:", data);
-        
-        // Safely extract data with defaults
-        setTargetPercentage(data?.readiness_score ?? 0);
-        setStrengths(data?.strengths || []);
-        setGaps(data?.gaps || []);
-        setNonNegotiable(data?.non_negotiable || []);
+        console.log("[RoleReadiness] Full API response:", JSON.stringify(data));
+        if (data == null || typeof data !== "object") {
+          setError("Invalid response from server");
+          return;
+        }
+        const targetRoleFromApi = data.target_role;
+        const readinessFromApi = data.readiness_score;
+        const strengthsFromApi = Array.isArray(data.strengths) ? data.strengths : [];
+        const gapsFromApi = Array.isArray(data.gaps) ? data.gaps : [];
+        const nonNegotiableFromApi = Array.isArray(data.non_negotiable) ? data.non_negotiable : [];
+        const verdictFromApi = data.verdict ?? "";
+        console.log("[RoleReadiness] Values used to render: target_role=", targetRoleFromApi, "readiness_score=", readinessFromApi, "strengths.length=", strengthsFromApi.length, "gaps.length=", gapsFromApi.length, "non_negotiable.length=", nonNegotiableFromApi.length);
+        setTargetRole(targetRoleFromApi ?? role);
+        setTargetPercentage(readinessFromApi ?? 0);
+        setStrengths(strengthsFromApi);
+        setGaps(gapsFromApi);
+        setNonNegotiable(nonNegotiableFromApi);
+        setVerdict(verdictFromApi);
         setError(null);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load role analysis";
-        console.error("Role analysis error:", errorMessage);
+        console.error("[RoleReadiness] Role analysis error:", errorMessage);
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -97,7 +120,7 @@ export default function RoleReadiness() {
           <div className="text-muted-foreground uppercase tracking-wider text-sm font-medium mb-4">
             Role Evaluation
           </div>
-          <h1 className="text-foreground mb-6">Senior Software Engineer</h1>
+          <h1 className="text-foreground mb-6">{targetRole || (loading ? "Loading…" : "Role Evaluation")}</h1>
           <p className="text-muted-foreground max-w-3xl" style={{ fontSize: '19px' }}>
             Comprehensive readiness assessment for your target position
           </p>
@@ -154,7 +177,7 @@ export default function RoleReadiness() {
 
             <div className="text-center">
               <div className="text-accent font-medium mb-2" style={{ fontSize: '18px' }}>
-                Partially Ready
+                {verdict || (loading ? "…" : "—")}
               </div>
               <p className="text-muted-foreground" style={{ fontSize: '16px' }}>
                 Strategic development required to reach full qualification

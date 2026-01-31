@@ -69,7 +69,7 @@ const roadmap = [
         tasks: [
           "Conduct technical interviews (practice)",
           "Update resume with quantified achievements",
-          "Network with 10 senior engineers in target companies"
+          "Network with engineers in target companies"
         ]
       }
     ]
