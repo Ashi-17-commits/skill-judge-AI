@@ -4,10 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skill Judge AI - Career Diagnostic Tool</title>
+    <script>
+      // Backend connection: same origin when served by FastAPI
+      window.__API_BASE__ = '';
+      window.__UPLOAD_ENDPOINT__ = '/api/resume/upload';
+      window.SkillJudgeAPI = {
+        uploadResume: function(file) {
+          var formData = new FormData();
+          formData.append('file', file);
+          return fetch((window.__API_BASE__ || '') + (window.__UPLOAD_ENDPOINT__ || '/api/resume/upload'), {
+            method: 'POST',
+            body: formData
+          }).then(function(r) { return r.ok ? r.json() : r.json().then(function(j) { return Promise.reject(j); }); });
+        }
+      };
+    </script>
     <script type="module" crossorigin src="/assets/index-FbE8Hzhh.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-CDXEzngm.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>

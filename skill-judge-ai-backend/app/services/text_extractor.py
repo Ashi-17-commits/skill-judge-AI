@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
@@ -6,6 +7,14 @@ from docx import Document
 
 
 SupportedExtension = Literal[".pdf", ".docx"]
+
+
+@dataclass
+class ExtractResult:
+    """Result of resume text extraction including metadata for scoring."""
+
+    text: str
+    page_count: int
 
 
 def detect_extension(file_path: Path) -> SupportedExtension:
@@ -51,11 +60,33 @@ def extract_text(file_path: Path) -> str:
     Dispatch to the correct extraction routine based on file extension.
     """
 
+    return extract_with_meta(file_path).text
+
+
+def extract_with_meta(file_path: Path) -> ExtractResult:
+    """
+    Extract plain text and page count (for PDF) or estimated pages (DOCX).
+    Used by ATS scoring for format/structure signals.
+    """
+
     ext = detect_extension(file_path)
     if ext == ".pdf":
-        return extract_text_from_pdf(file_path)
+        text_parts: list[str] = []
+        page_count = 0
+        with pdfplumber.open(str(file_path)) as pdf:
+            page_count = len(pdf.pages)
+            for page in pdf.pages:
+                page_text = page.extract_text() or ""
+                if page_text:
+                    text_parts.append(page_text)
+        text = "\n".join(text_parts).strip()
+        return ExtractResult(text=text, page_count=page_count)
     if ext == ".docx":
-        return extract_text_from_docx(file_path)
-    # The extension check above guarantees this line is not reachable in
-    # normal operation but is left here as a defensive guard.
+        doc = Document(str(file_path))
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        text = "\n".join(paragraphs).strip()
+        # Estimate pages: ~30 lines per page for typical resume
+        line_count = len([p for p in doc.paragraphs if p.text.strip()])
+        page_count = max(1, (line_count + 29) // 30)
+        return ExtractResult(text=text, page_count=page_count)
     raise ValueError(f"Unsupported file extension: {ext}")

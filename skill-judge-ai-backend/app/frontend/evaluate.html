@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill Judge AI - Evaluate Resume</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1.25rem; line-height: 1.6; }
+    h1 { font-size: 1.375rem; font-weight: 600; margin-bottom: 0.75rem; line-height: 1.35; }
+    p { color: #555; margin-bottom: 1.25rem; font-size: 1rem; }
+    input[type="file"] { margin-bottom: 1.25rem; }
+    button { padding: 0.625rem 1.25rem; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: opacity 0.2s ease, background-color 0.2s ease; }
+    button:hover:not(:disabled) { opacity: 0.92; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error { color: #b91c1c; margin-top: 1.25rem; font-size: 0.9375rem; }
+    .result { margin-top: 2rem; padding: 1.25rem; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .result h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .score { font-size: 1.75rem; font-weight: 600; margin: 0.5rem 0; }
+    .breakdown { list-style: none; padding: 0; margin: 1.25rem 0 0; }
+    .breakdown li { padding: 0.625rem 0; border-bottom: 1px solid #e2e8f0; line-height: 1.5; }
+    .breakdown li:last-child { border-bottom: none; }
+    .reason { font-size: 0.875rem; color: #64748b; margin-top: 0.25rem; line-height: 1.45; }
+    a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>Skill Judge AI – Evaluate Resume</h1>
+  <p>Upload a PDF or DOCX resume. The backend will return an ATS score, verdict, summary, and score breakdown.</p>
+  <form id="form">
+    <input type="file" id="file" accept=".pdf,.docx" required />
+    <button type="submit" id="btn">Evaluate</button>
+  </form>
+  <div id="error" class="error" aria-live="polite"></div>
+  <div id="result" class="result" hidden aria-live="polite"></div>
+  <p style="margin-top: 2.5rem; padding-top: 1.5rem;"><a href="/">Back to Skill Judge AI</a></p>
+
+  <script>
+    (function() {
+      var form = document.getElementById('form');
+      var fileInput = document.getElementById('file');
+      var btn = document.getElementById('btn');
+      var errorEl = document.getElementById('error');
+      var resultEl = document.getElementById('result');
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.hidden = false;
+        resultEl.hidden = true;
+      }
+
+      function showResult(data) {
+        errorEl.textContent = '';
+        errorEl.hidden = true;
+        resultEl.hidden = false;
+
+        var overall = data.overall_score != null ? data.overall_score : '—';
+        var verdict = data.verdict || '—';
+        var summary = data.summary || '—';
+        var breakdown = data.score_breakdown || [];
+
+        var html = '<h2>Result</h2>';
+        html += '<p><strong>Overall score:</strong> <span class="score">' + overall + '</span> / 100</p>';
+        html += '<p><strong>Verdict:</strong> ' + verdict + '</p>';
+        html += '<p><strong>Summary:</strong> ' + summary + '</p>';
+        if (breakdown.length) {
+          html += '<ul class="breakdown">';
+          breakdown.forEach(function(item) {
+            html += '<li><strong>' + (item.label || item.key) + '</strong>: ' + (item.score != null ? item.score : '—') + '/100';
+            if (item.reason) html += '<div class="reason">' + item.reason + '</div>';
+            html += '</li>';
+          });
+          html += '</ul>';
+        }
+        resultEl.innerHTML = html;
+      }
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var file = fileInput.files[0];
+        if (!file) { showError('Please select a file.'); return; }
+
+        btn.disabled = true;
+        showError('');
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/api/resume/upload', { method: 'POST', body: formData })
+          .then(function(res) { return res.json().then(function(body) { return { ok: res.ok, body: body }; }); })
+          .then(function(_ref) {
+            var ok = _ref.ok;
+            var body = _ref.body;
+            btn.disabled = false;
+            if (ok) showResult(body);
+            else showError(body.message || 'Upload failed.');
+          })
+          .catch(function(err) {
+            btn.disabled = false;
+            showError(err && err.message ? err.message : 'Network or server error.');
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

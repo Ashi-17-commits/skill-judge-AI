@@ -3,6 +3,34 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+class ScoreBreakdownItemSchema(BaseModel):
+    """Single category in the ATS score breakdown (frontend contract)."""
+
+    key: str = Field(..., description="Unique key for the category.")
+    label: str = Field(..., description="Display label for the category.")
+    score: int = Field(..., ge=0, le=100, description="Category score 0–100.")
+    reason: str = Field(..., description="Human-readable, rule-based reason.")
+
+
+class AtsScoreResponse(BaseModel):
+    """
+    Response shape required by the frontend for ATS bars and popups.
+    Do not change field names or structure.
+    """
+
+    overall_score: int = Field(..., ge=0, le=100, description="Overall ATS score 0–100.")
+    verdict: str = Field(..., description="Strong / Moderate / Low.")
+    summary: str = Field(..., description="One-sentence rule-based summary.")
+    score_breakdown: List[ScoreBreakdownItemSchema] = Field(
+        ...,
+        description="Per-category scores and reasons.",
+    )
+    resume_id: Optional[str] = Field(
+        None,
+        description="Id to pass to POST /api/role/analyze for role readiness analysis.",
+    )
+
+
 class AtsFacts(BaseModel):
     """
     Deterministic ATS-style evaluation results derived without any LLM.
@@ -60,6 +88,26 @@ class Explanation(BaseModel):
         default_factory=list,
         description="Concrete suggestions for how the candidate can strengthen the resume.",
     )
+
+
+class RoleAnalyzeRequest(BaseModel):
+    """Request body for POST /api/role/analyze."""
+
+    resume_id: str = Field(..., description="Id returned from resume upload.")
+    target_role: str = Field(..., description="Role name or slug, e.g. Senior Software Engineer.")
+
+
+class RoleAnalyzeResponse(BaseModel):
+    """Response body for POST /api/role/analyze."""
+
+    target_role: str = Field(..., description="Display name of the analyzed role.")
+    readiness_score: float = Field(..., ge=0, le=100, description="Role readiness 0–100.")
+    verdict: str = Field(..., description="Job Ready / Partially Ready / Not Ready.")
+    strengths: List[str] = Field(default_factory=list, description="Skills that match the role.")
+    skill_gaps: List[str] = Field(default_factory=list, description="Required skills missing from resume.")
+    priority_skills: List[str] = Field(default_factory=list, description="Skills to learn or showcase first.")
+    experience_gap: str = Field(..., description="Human-readable experience fit.")
+    explanation: str = Field(..., description="Rule-based or LLM summary of the analysis.")
 
 
 class ResumeEvaluationResponse(BaseModel):

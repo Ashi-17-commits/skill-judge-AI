@@ -6,6 +6,7 @@ from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, Fil
 from fastapi.staticfiles import StaticFiles
 
 from app.api.resume import router as resume_router
+from app.api.role import router as role_router
 from app.core.config import settings
 from app.core.database import db_client
 
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
         ),
     )
 
+    # Add CORS middleware FIRST before routes
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -32,7 +34,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Then include routers
     app.include_router(resume_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(role_router, prefix=settings.API_V1_PREFIX)
 
     # Mount static files (React dist)
     frontend_path = Path(__file__).parent / "frontend"
@@ -73,6 +77,19 @@ def create_app() -> FastAPI:
                 "status": "ok",
             },
         )
+
+    @app.get("/evaluate", include_in_schema=False)
+    async def serve_evaluate() -> FileResponse:
+        """
+        Serve evaluate.html: standalone page that calls POST /api/resume/upload
+        and displays overall_score, verdict, summary, score_breakdown.
+        Connects frontend UI to backend logic.
+        """
+        frontend_path = Path(__file__).parent / "frontend"
+        evaluate_file = frontend_path / "evaluate.html"
+        if evaluate_file.exists():
+            return FileResponse(evaluate_file)
+        raise HTTPException(status_code=404, detail="Evaluate page not found")
 
     @app.get("/human", response_class=PlainTextResponse, tags=["Info"])
     async def human_readable(request: Request) -> PlainTextResponse:
@@ -135,8 +152,8 @@ def create_app() -> FastAPI:
         This allows React Router to handle client-side routing.
         Skips API and doc routes.
         """
-        # Don't serve SPA for API or docs routes
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi") or full_path.startswith("redoc"):
+        # Don't serve SPA for API, docs, or evaluate (has its own route)
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi") or full_path.startswith("redoc") or full_path == "evaluate":
             raise HTTPException(status_code=404, detail="Not found")
         
         frontend_path = Path(__file__).parent / "frontend"

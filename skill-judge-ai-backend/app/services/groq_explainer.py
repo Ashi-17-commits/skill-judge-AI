@@ -49,6 +49,64 @@ def _safe_json_loads(raw: str) -> Dict[str, Any]:
     return json.loads(raw)
 
 
+def explain_role_analysis(
+    readiness_score: float,
+    verdict: str,
+    strengths: list,
+    skill_gaps: list,
+    experience_gap: str,
+    target_role: str,
+) -> str:
+    """
+    Use Groq to convert role analysis facts into one clean explanation string.
+    Does not change scores or gaps; on failure caller uses rule-based explanation.
+    """
+    if not settings.GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured.")
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    prompt = (
+        "Turn this role-readiness analysis into one short, professional paragraph. "
+        "Do not add scores or invent gaps. No emojis. Return STRICT JSON with key: explanation (string).\n"
+        f"Role: {target_role}. Verdict: {verdict}. Readiness: {readiness_score}/100. "
+        f"Strengths: {strengths}. Skill gaps: {skill_gaps}. Experience: {experience_gap}"
+    )
+    response = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        temperature=settings.GROQ_TEMPERATURE,
+        response_format={"type": "json_object"},
+        messages=[{"role": "user", "content": prompt}],
+    )
+    content = response.choices[0].message.content or "{}"
+    data = _safe_json_loads(content)
+    return str(data.get("explanation", "")).strip() or experience_gap
+
+
+def rewrite_verdict_summary(verdict: str, summary: str) -> tuple[str, str]:
+    """
+    Use Groq to rewrite only verdict and summary in better language.
+    Does not change scores or reasons. On failure, caller should keep original.
+    """
+    if not settings.GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured.")
+    client = Groq(api_key=settings.GROQ_API_KEY)
+    prompt = (
+        "Rewrite the following ATS verdict and summary in one short sentence each, "
+        "professional and direct. No emojis. Return STRICT JSON with keys: verdict (string), summary (string).\n"
+        f"Current verdict: {verdict}\nCurrent summary: {summary}"
+    )
+    response = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        temperature=settings.GROQ_TEMPERATURE,
+        response_format={"type": "json_object"},
+        messages=[{"role": "user", "content": prompt}],
+    )
+    content = response.choices[0].message.content or "{}"
+    data = _safe_json_loads(content)
+    new_verdict = str(data.get("verdict", verdict)).strip() or verdict
+    new_summary = str(data.get("summary", summary)).strip() or summary
+    return (new_verdict, new_summary)
+
+
 def explain_with_groq(ats_facts: AtsFacts) -> Explanation:
     """
     Call Groq's LLaMA-3 model to generate a structured explanation.
