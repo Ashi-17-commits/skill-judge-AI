@@ -1,7 +1,23 @@
-// Production-safe API configuration
-// In production (Render), use the backend URL from env variable
-// In development, empty string uses the Vite proxy
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+/**
+ * Backend URL: runtime (window) then build-time env.
+ * On Render: set VITE_API_BASE_URL or VITE_API_URL to your backend service URL (HTTPS) at build time.
+ * Accept both names so either env var works.
+ */
+function getApiBaseUrl() {
+  if (typeof window !== "undefined" && window.__API_BASE_URL__ != null && String(window.__API_BASE_URL__).trim() !== "") {
+    return String(window.__API_BASE_URL__).trim().replace(/\/$/, "");
+  }
+  const a = import.meta.env.VITE_API_BASE_URL;
+  const b = import.meta.env.VITE_API_URL;
+  const fromEnv = (a != null && String(a).trim() !== "") ? String(a).trim() : (b != null && String(b).trim() !== "" ? String(b).trim() : "");
+  return fromEnv.replace(/\/$/, "");
+}
+
+const API_BASE_URL = getApiBaseUrl();
+
+if (typeof window !== "undefined") {
+  console.log("[API] Backend URL:", API_BASE_URL || "(relative – same origin)");
+}
 
 /**
  * Safe JSON response parsing with defensive error handling.
@@ -34,9 +50,12 @@ const safeParse = async (response) => {
 export const uploadResume = async (formData) => {
   try {
     console.log(`[API] Starting resume upload to: ${API_BASE_URL || '(proxy)'}/api/resume/upload`);
-    const res = await fetch(`${API_BASE_URL}/api/resume/upload`, {
+    const url = `${API_BASE_URL}/api/resume/upload`;
+    console.log("[API] POST", url);
+    const res = await fetch(url, {
       method: "POST",
       body: formData,
+      credentials: "include",
     });
     
     console.log(`[API] Upload response received, status: ${res.status}, ok: ${res.ok}`);
@@ -61,7 +80,11 @@ export const uploadResume = async (formData) => {
     console.log(`[API] Upload completed successfully, resume_id: ${result.resume_id}`);
     return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error uploading resume";
+    let message = error instanceof Error ? error.message : "Unknown error uploading resume";
+    const isProd = typeof window !== "undefined" && window.location && !/^localhost$|^127\.0\.0\.1$/i.test(window.location.hostname);
+    if (isProd && !API_BASE_URL) {
+      message += " Set VITE_API_BASE_URL (or VITE_API_URL) to your backend URL (e.g. https://your-backend.onrender.com) in Render and rebuild.";
+    }
     console.error("[API] uploadResume error:", message);
     throw new Error(message);
   }
@@ -70,10 +93,13 @@ export const uploadResume = async (formData) => {
 export const analyzeRole = async (resumeId, role) => {
   try {
     console.log(`[API] Starting role analysis for role: ${role}, resume_id: ${resumeId}`);
-    const res = await fetch(`${API_BASE_URL}/api/role/analyze`, {
+    const url = `${API_BASE_URL}/api/role/analyze`;
+    console.log("[API] POST", url);
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resume_id: resumeId, role }),
+      credentials: "include",
     });
     
     console.log(`[API] Role analysis response received, status: ${res.status}, ok: ${res.ok}`);
@@ -98,7 +124,11 @@ export const analyzeRole = async (resumeId, role) => {
     console.log(`[API] Role analysis completed, readiness_score: ${result.readiness_score}`);
     return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error analyzing role";
+    let message = error instanceof Error ? error.message : "Unknown error analyzing role";
+    const isProd = typeof window !== "undefined" && window.location && !/^localhost$|^127\.0\.0\.1$/i.test(window.location.hostname);
+    if (isProd && !API_BASE_URL) {
+      message += " Set VITE_API_BASE_URL (or VITE_API_URL) to your backend URL in Render and rebuild.";
+    }
     console.error("[API] analyzeRole error:", message);
     throw new Error(message);
   }

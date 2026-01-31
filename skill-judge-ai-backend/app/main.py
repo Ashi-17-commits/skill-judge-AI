@@ -1,7 +1,7 @@
 from pathlib import Path
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -9,6 +9,33 @@ from app.api.resume import router as resume_router
 from app.api.role import router as role_router
 from app.core.config import settings
 from app.core.database import db_client
+
+
+class ReflectOriginCORSMiddleware(BaseHTTPMiddleware):
+    """
+    CORS: reflect request Origin so any Render frontend can call this backend.
+    Handle OPTIONS preflight with 200 so browser allows the actual request.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+        if request.method == "OPTIONS":
+            resp = JSONResponse(content={}, status_code=200)
+            if origin:
+                resp.headers["Access-Control-Allow-Origin"] = origin
+                resp.headers["Access-Control-Allow-Credentials"] = "true"
+            resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            resp.headers["Access-Control-Max-Age"] = "86400"
+            return resp
+        response = await call_next(request)
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Expose-Headers"] = "Content-Type"
+        response.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        return response
 
 
 def create_app() -> FastAPI:
@@ -25,14 +52,7 @@ def create_app() -> FastAPI:
         ),
     )
 
-    # Add CORS middleware FIRST before routes
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    app.add_middleware(ReflectOriginCORSMiddleware)
 
     # Then include routers
     app.include_router(resume_router, prefix=settings.API_V1_PREFIX)
@@ -42,6 +62,11 @@ def create_app() -> FastAPI:
     frontend_path = Path(__file__).parent / "frontend"
     if frontend_path.exists():
         app.mount("/assets", StaticFiles(directory=frontend_path / "assets"), name="assets")
+
+    @app.get("/health", include_in_schema=False)
+    async def health() -> JSONResponse:
+        """Health check for Render and load balancers."""
+        return JSONResponse(status_code=200, content={"status": "ok"})
 
     @app.on_event("startup")
     async def on_startup() -> None:
