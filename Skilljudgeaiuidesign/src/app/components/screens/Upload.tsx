@@ -60,6 +60,11 @@ export default function Upload() {
       const result = await uploadResume(formData);
       console.log("Upload successful:", result);
       
+      // Validate response has required fields
+      if (!result || typeof result !== 'object') {
+        throw new Error("Invalid response format from server");
+      }
+      
       clearInterval(interval);
       setProgress(100);
       setStatusText("Analysis complete!");

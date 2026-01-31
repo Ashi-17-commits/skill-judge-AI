@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { ChevronRight, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { analyzeRole } from "@/api/api";
 
 // Dynamic data will be fetched from backend
 
@@ -15,6 +16,7 @@ export default function RoleReadiness() {
   const [gaps, setGaps] = useState<string[]>([]);
   const [nonNegotiable, setNonNegotiable] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const role = (location.state as any)?.role;
   const resume_id = (location.state as any)?.resume_id;
@@ -29,26 +31,19 @@ export default function RoleReadiness() {
     const fetchRoleAnalysis = async () => {
       try {
         console.log("Fetching role analysis for role:", role, "resume_id:", resume_id);
-        const res = await fetch(`/api/role/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role, resume_id }),
-        });
-        console.log("Role analyze response status:", res.status);
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error("Role analyze failed", res.status, errText);
-          setLoading(false);
-          return;
-        }
-        const data = await res.json();
+        const data = await analyzeRole(resume_id, role);
         console.log("Role analysis data:", data);
-        setTargetPercentage(data.readiness_score);
-        setStrengths(data.strengths || []);
-        setGaps(data.gaps || []);
-        setNonNegotiable(data.non_negotiable || []);
+        
+        // Safely extract data with defaults
+        setTargetPercentage(data?.readiness_score ?? 0);
+        setStrengths(data?.strengths || []);
+        setGaps(data?.gaps || []);
+        setNonNegotiable(data?.non_negotiable || []);
+        setError(null);
       } catch (err) {
-        console.error("Role analysis error", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to load role analysis";
+        console.error("Role analysis error:", errorMessage);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -82,6 +77,17 @@ export default function RoleReadiness() {
       <ThemeToggle />
       
       <div className="max-w-7xl mx-auto space-y-16">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Error loading analysis</p>
+              <p className="text-sm opacity-90">{error}</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

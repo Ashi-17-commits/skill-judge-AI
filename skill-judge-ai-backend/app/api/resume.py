@@ -62,66 +62,97 @@ async def upload_resume(
     - Return overall_score, verdict, summary, score_breakdown (frontend contract)
     """
 
-    original_filename = file.filename or "resume"
-    extension = Path(original_filename).suffix.lower()
-    if extension not in {".pdf", ".docx"}:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported file type. Only PDF and DOCX are allowed.",
-        )
-
-    upload_dir = settings.UPLOAD_DIR
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = original_filename.replace("/", "_").replace("\\", "_")
-    stored_path = upload_dir / safe_name
-
-    file_bytes = await file.read()
     try:
-        stored_path.write_bytes(file_bytes)
-    except OSError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to store uploaded file: {exc}",
-        ) from exc
+        original_filename = file.filename or "resume"
+        extension = Path(original_filename).suffix.lower()
+        if extension not in {".pdf", ".docx"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unsupported file type. Only PDF and DOCX are allowed.",
+            )
 
-    try:
-        extract_result = extract_with_meta(stored_path)
-        raw_text = extract_result.text
-        page_count = extract_result.page_count
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to extract text from resume: {exc}",
-        ) from exc
+        upload_dir = settings.UPLOAD_DIR
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = original_filename.replace("/", "_").replace("\\", "_")
+        stored_path = upload_dir / safe_name
 
-    if not raw_text.strip():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not extract any text from the uploaded resume.",
-        )
-
-    signals = parse_resume_signals(raw_text, page_count=page_count)
-    overall_score, verdict, summary, score_breakdown = compute_evidence_based_ats(signals)
-
-    resume_id = generate_id()
-    store_put(resume_id, signals)
-
-    # Optional: LLM rewrites only verdict and summary; scores and reasons unchanged
-    if settings.GROQ_API_KEY:
+        file_bytes = await file.read()
         try:
-            verdict, summary = rewrite_verdict_summary(verdict, summary)
-        except Exception:
-            pass  # keep rule-based verdict and summary
+            stored_path.write_bytes(file_bytes)
+        except OSError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to store uploaded file: {exc}",
+            ) from exc
 
-    return AtsScoreResponse(
-        overall_score=overall_score,
-        verdict=verdict,
-        summary=summary,
-        score_breakdown=_breakdown_to_schema(score_breakdown),
-        resume_id=resume_id,
-    )
+        try:
+            extract_result = extract_with_meta(stored_path)
+            raw_text = extract_result.text
+            page_count = extract_result.page_count
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to extract text from resume: {exc}",
+            ) from exc
+
+        if not raw_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not extract any text from the uploaded resume.",
+            )
+
+        try:
+            signals = parse_resume_signals(raw_text, page_count=page_count)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to parse resume signals: {exc}",
+            ) from exc
+
+        try:
+            overall_score, verdict, summary, score_breakdown = compute_evidence_based_ats(signals)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to compute ATS score: {exc}",
+            ) from exc
+
+        resume_id = generate_id()
+        try:
+            store_put(resume_id, signals)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to store resume: {exc}",
+            ) from exc
+
+        # Optional: LLM rewrites only verdict and summary; scores and reasons unchanged
+        if settings.GROQ_API_KEY:
+            try:
+                verdict, summary = rewrite_verdict_summary(verdict, summary)
+            except Exception as exc:
+                # Log but don't fail - rule-based verdict is still valid
+                print(f"Warning: Failed to rewrite verdict with LLM: {exc}")
+
+        return AtsScoreResponse(
+            overall_score=overall_score,
+            verdict=verdict,
+            summary=summary,
+            score_breakdown=_breakdown_to_schema(score_breakdown),
+            resume_id=resume_id,
+        )
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (already have proper error responses)
+        raise
+    except Exception as exc:
+        # Catch any unexpected errors and return valid JSON
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error processing resume: {str(exc)}",
+        ) from exc
