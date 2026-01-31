@@ -17,14 +17,8 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      // Proxy API requests to the backend during development
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path,
-      },
-    },
+    // No proxy needed - API calls use VITE_API_BASE_URL environment variable
+    // For development: VITE_API_BASE_URL=http://localhost:8000
+    // For production: VITE_API_BASE_URL=https://skill-judge-ai-tm61.onrender.com
   },
 })

@@ -25,13 +25,23 @@ def create_app() -> FastAPI:
         ),
     )
 
-    # Add CORS middleware FIRST before routes
+    # CORS configuration - Allow only deployed frontend and localhost for development
+    allowed_origins = [
+        "https://skill-judge-ai-86rg.onrender.com",  # Production frontend
+        "http://localhost:5173",  # Local development
+        "http://localhost:5174",  # Local development (fallback port)
+        "http://localhost:5175",  # Local development (fallback port)
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+    ]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     # Then include routers
@@ -43,12 +53,23 @@ def create_app() -> FastAPI:
     if frontend_path.exists():
         app.mount("/assets", StaticFiles(directory=frontend_path / "assets"), name="assets")
 
+    # Request logging middleware for production debugging
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        """Log incoming API requests from frontend."""
+        if request.url.path.startswith("/api"):
+            origin = request.headers.get("origin", "unknown")
+            print(f"[API REQUEST] {request.method} {request.url.path} from {origin}")
+        response = await call_next(request)
+        return response
+
     @app.on_event("startup")
     async def on_startup() -> None:
         """
         Initialize shared resources such as the (optional) database client.
         """
-
+        print(f"[STARTUP] Skill Judge AI Backend starting...")
+        print(f"[STARTUP] Allowed CORS origins: {allowed_origins}")
         await db_client.connect()
 
     @app.on_event("shutdown")
