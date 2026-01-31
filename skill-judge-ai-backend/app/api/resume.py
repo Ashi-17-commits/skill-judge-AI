@@ -39,7 +39,6 @@ async def options_upload() -> JSONResponse:
 
 @router.post(
     "/upload",
-    response_model=AtsScoreResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Upload and evaluate a resume",
 )
@@ -50,7 +49,7 @@ async def upload_resume(
             description="Resume file to upload (PDF or DOCX).",
         ),
     ],
-) -> AtsScoreResponse:
+):
     """
     Evidence-based resume evaluation pipeline:
 
@@ -139,12 +138,32 @@ async def upload_resume(
                 # Log but don't fail - rule-based verdict is still valid
                 print(f"Warning: Failed to rewrite verdict with LLM: {exc}")
 
-        return AtsScoreResponse(
-            overall_score=overall_score,
-            verdict=verdict,
-            summary=summary,
-            score_breakdown=_breakdown_to_schema(score_breakdown),
-            resume_id=resume_id,
+        # Explicitly return JSONResponse to ensure proper serialization
+        # Convert Pydantic models to dicts for JSON serialization
+        breakdown_dicts = [
+            {
+                "key": item.key,
+                "label": item.label,
+                "score": item.score,
+                "reason": item.reason
+            }
+            for item in _breakdown_to_schema(score_breakdown)
+        ]
+        
+        response_data = {
+            "overall_score": overall_score,
+            "verdict": verdict,
+            "summary": summary,
+            "score_breakdown": breakdown_dicts,
+            "resume_id": resume_id,
+        }
+        
+        print(f"[RESUME UPLOAD] Success - resume_id: {resume_id}, score: {overall_score}")
+        
+        return JSONResponse(
+            status_code=201,
+            content=response_data,
+            headers={"Content-Type": "application/json"},
         )
 
     except HTTPException:
@@ -152,6 +171,9 @@ async def upload_resume(
         raise
     except Exception as exc:
         # Catch any unexpected errors and return valid JSON
+        print(f"ERROR in upload_resume: {exc}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error processing resume: {str(exc)}",

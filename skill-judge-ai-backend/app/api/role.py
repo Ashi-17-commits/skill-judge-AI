@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.models.role_response import RoleReadinessResponse
@@ -15,7 +16,7 @@ class RoleAnalyzeRequest(BaseModel):
 router = APIRouter(prefix="/role", tags=["Role"])
 
 
-@router.post("/analyze", response_model=RoleReadinessResponse, status_code=status.HTTP_200_OK)
+@router.post("/analyze", status_code=status.HTTP_200_OK)
 async def analyze_role(request: RoleAnalyzeRequest):
     """Analyze readiness for a selected role using stored resume signals.
 
@@ -61,13 +62,23 @@ async def analyze_role(request: RoleAnalyzeRequest):
                 detail=f"Failed to evaluate role readiness: {exc}",
             ) from exc
 
-        return result
+        print(f"[ROLE ANALYSIS] Success - role: {original_role}, readiness_score: {result.readiness_score}")
+        
+        # Explicitly return JSONResponse to ensure proper serialization
+        return JSONResponse(
+            status_code=200,
+            content=result.dict() if hasattr(result, 'dict') else result,
+            headers={"Content-Type": "application/json"},
+        )
 
     except HTTPException:
         # Re-raise HTTP exceptions (already have proper error responses)
         raise
     except Exception as exc:
         # Catch any unexpected errors and return valid JSON
+        print(f"ERROR in analyze_role: {exc}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Unexpected error analyzing role: {str(exc)}",
