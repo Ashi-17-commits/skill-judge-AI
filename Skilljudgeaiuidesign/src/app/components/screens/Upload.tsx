@@ -57,25 +57,39 @@ export default function Upload() {
       formData.append("file", file);
       
       console.log("Uploading file:", file.name);
+      console.log("File size:", file.size, "bytes");
+      
       const result = await uploadResume(formData);
-      console.log("Upload successful:", result);
+      console.log("Upload successful, result:", result);
+      console.log("Result type:", typeof result);
+      console.log("Result keys:", result ? Object.keys(result) : "null");
       
       // Validate response has required fields
       if (!result || typeof result !== 'object') {
+        console.error("Invalid response format:", result);
         throw new Error("Invalid response format from server");
       }
       
+      if (!result.overall_score && result.overall_score !== 0) {
+        console.error("Missing overall_score in response:", result);
+        throw new Error("Missing required field: overall_score");
+      }
+      
+      console.log("Response validation passed");
       clearInterval(interval);
       setProgress(100);
       setStatusText("Analysis complete!");
       
-      setTimeout(() => navigate("/ats-score", { state: { data: result } }), 500);
+      setTimeout(() => {
+        console.log("Navigating to ats-score with data:", result);
+        navigate("/ats-score", { state: { data: result } });
+      }, 500);
     } catch (err) {
       clearInterval(interval);
       const errorMessage = err instanceof Error ? err.message : "Failed to upload resume";
+      console.error("Upload error:", errorMessage, "Full error:", err);
       setError(errorMessage);
       setIsAnalyzing(false);
-      console.error("Upload error:", err);
     }
   };
 
