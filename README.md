@@ -101,11 +101,8 @@ skill-judge-AI/
 │   ├── requirements.txt          # Python dependencies
 │   └── README.md                 # Backend-specific documentation
 │
-└── Documentation/                 # Project documentation
-    ├── BUG_FIX_SUMMARY.md
-    ├── DEPLOYMENT_VERIFICATION.md
-    ├── IMPLEMENTATION_SUMMARY.md
-    └── PRODUCTION_*.md            # Production deployment guides
+├── RENDER_ENV_SETUP.md            # Render deployment environment setup
+└── README.md                      # Main project documentation
 ```
 
 ## 🔑 Key Features
@@ -174,11 +171,9 @@ PORT=8000
 
 ## 🚢 Deployment
 
-The project includes comprehensive deployment documentation:
+The project includes deployment documentation:
 
-- `DEPLOYMENT_VERIFICATION.md` - Deployment checklist
 - `RENDER_ENV_SETUP.md` - Render.com configuration
-- `PRODUCTION_CONNECTION_FINAL_REPORT.md` - Production setup guide
 
 ### Quick Deploy (Render.com)
 
@@ -208,10 +203,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 🐛 Issues & Bug Reports
 
-If you encounter any issues, please check the documentation files:
-- `BUG_FIX_SUMMARY.md`
-- `PRODUCTION_BUG_FIX.md`
-- `PRODUCTION_BUG_FIX_VERIFICATION.md`
+If you encounter any issues, please open an issue with steps to reproduce and logs.
 
 ## 📧 Contact
 
