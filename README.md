@@ -100,12 +100,6 @@ skill-judge-AI/
 │   │       └── database.py       # Database client
 │   ├── requirements.txt          # Python dependencies
 │   └── README.md                 # Backend-specific documentation
-│
-└── Documentation/                 # Project documentation
-    ├── BUG_FIX_SUMMARY.md
-    ├── DEPLOYMENT_VERIFICATION.md
-    ├── IMPLEMENTATION_SUMMARY.md
-    └── PRODUCTION_*.md            # Production deployment guides
 ```
 
 ## 🔑 Key Features
@@ -174,12 +168,6 @@ PORT=8000
 
 ## 🚢 Deployment
 
-The project includes comprehensive deployment documentation:
-
-- `DEPLOYMENT_VERIFICATION.md` - Deployment checklist
-- `RENDER_ENV_SETUP.md` - Render.com configuration
-- `PRODUCTION_CONNECTION_FINAL_REPORT.md` - Production setup guide
-
 ### Quick Deploy (Render.com)
 
 1. Connect your GitHub repository to Render
@@ -208,10 +196,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 🐛 Issues & Bug Reports
 
-If you encounter any issues, please check the documentation files:
-- `BUG_FIX_SUMMARY.md`
-- `PRODUCTION_BUG_FIX.md`
-- `PRODUCTION_BUG_FIX_VERIFICATION.md`
+If you encounter any issues, please open a GitHub issue with reproduction steps and relevant logs.
 
 ## 📧 Contact
 
