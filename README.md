@@ -1,222 +1,117 @@
 # Skill Judge AI
 
-An AI-powered resume evaluation platform that provides deterministic scoring with LLM-based explanations for job matching and skill assessment.
+Skill Judge AI is a full-stack resume assessment platform.
+It combines deterministic scoring with AI-assisted language polishing to produce clear, structured candidate evaluations.
 
-## 🎯 Overview
+## Repository Structure
 
-Skill Judge AI is a full-stack application designed to evaluate resumes against job role requirements using AI technology. The platform provides:
+- `/home/runner/work/skill-judge-AI/skill-judge-AI/Skilljudgeaiuidesign` — React + Vite frontend
+- `/home/runner/work/skill-judge-AI/skill-judge-AI/skill-judge-ai-backend` — FastAPI backend
 
-- **Automated Resume Analysis** - Upload PDF or DOCX resumes for instant evaluation
-- **AI-Powered Scoring** - Deterministic scoring system with detailed explanations
-- **Role Matching** - Compare candidate skills against specific job requirements
-- **Modern UI** - Built with React and Material-UI for an intuitive user experience
-- **RESTful API** - FastAPI backend for high-performance processing
+## Core Capabilities
 
-## 🏗️ Architecture
+- Upload and parse resumes in PDF or DOCX format
+- Evidence-based ATS scoring with deterministic rules
+- Role-readiness analysis for predefined job roles
+- Structured API responses for frontend integration
+- Optional Groq-based rewrite for verdict and summary tone
 
-The project consists of two main components:
+## Tech Stack
 
-### Frontend (`Skilljudgeaiuidesign/`)
-- **Framework**: React 18.3.1 with Vite
-- **UI Libraries**: 
-  - Material-UI (MUI) v7
-  - Radix UI components
-  - TailwindCSS v4
-- **Key Features**:
-  - Drag-and-drop file upload
-  - Interactive dashboard
-  - Responsive design
-  - Dark mode support (next-themes)
+### Frontend
+- React 18 + Vite
+- Material UI + Radix UI
+- Tailwind CSS
 
-### Backend (`skill-judge-ai-backend/`)
-- **Framework**: FastAPI 0.115.0
-- **AI Integration**: Groq LLM API
-- **Document Processing**:
-  - PDF parsing (pdfplumber)
-  - DOCX parsing (python-docx)
-- **Key Features**:
-  - Resume upload and parsing
-  - Role-based evaluation API
-  - CORS-enabled for frontend integration
-  - Health check endpoints
+### Backend
+- FastAPI + Uvicorn
+- Pydantic
+- pdfplumber + python-docx
+- Groq API (optional enhancement layer)
 
-## 🚀 Getting Started
+## Prerequisites
 
-### Prerequisites
+- Node.js 18+
+- pnpm
+- Python 3.9+
+- pip
 
-- **Node.js** (v18+) and **pnpm** for frontend
-- **Python** (v3.9+) and **pip** for backend
-- **Groq API Key** for AI functionality
+## Local Development
 
-### Frontend Setup
+### 1) Start Backend
 
 ```bash
-cd Skilljudgeaiuidesign
+cd /home/runner/work/skill-judge-AI/skill-judge-AI/skill-judge-ai-backend
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\\Scripts\\Activate.ps1
+pip install -r requirements.txt
+python -m app.main
+```
+
+Backend runs on `http://localhost:8000` by default.
+
+### 2) Start Frontend
+
+```bash
+cd /home/runner/work/skill-judge-AI/skill-judge-AI/Skilljudgeaiuidesign
 pnpm install
 pnpm dev
 ```
 
-The frontend will be available at `http://localhost:5173` (default Vite port)
+Frontend runs on `http://localhost:5173` by default.
 
-### Backend Setup
+## Backend Environment Variables
 
-```bash
-cd skill-judge-ai-backend
-pip install -r requirements.txt
+Create `/home/runner/work/skill-judge-AI/skill-judge-AI/skill-judge-ai-backend/.env` as needed:
 
-# Set up environment variables
-# Create a .env file with:
-# GROQ_API_KEY=your_groq_api_key
-# CORS_ORIGINS=http://localhost:5173
-
-python -m app.main
-```
-
-The backend will be available at `http://localhost:8000`
-
-### API Documentation
-
-Once the backend is running, access the interactive API docs at:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-
-## 📁 Project Structure
-
-```
-skill-judge-AI/
-├── Skilljudgeaiuidesign/          # React frontend application
-│   ├── src/                       # Source code
-│   ├── package.json               # Frontend dependencies
-│   └── vite.config.ts             # Vite configuration
-│
-├── skill-judge-ai-backend/        # FastAPI backend application
-│   ├── app/
-│   │   ├── main.py               # FastAPI application entry point
-│   │   ├── api/                  # API route handlers
-│   │   │   ├── resume.py         # Resume upload & evaluation
-│   ���   │   └── role.py           # Role management endpoints
-│   │   └── core/                 # Core utilities
-│   │       ├── config.py         # Configuration management
-│   │       └── database.py       # Database client
-│   ├── requirements.txt          # Python dependencies
-│   └── README.md                 # Backend-specific documentation
-│
-└── Documentation/                 # Project documentation
-    ├── BUG_FIX_SUMMARY.md
-    ├── DEPLOYMENT_VERIFICATION.md
-    ├── IMPLEMENTATION_SUMMARY.md
-    └── PRODUCTION_*.md            # Production deployment guides
-```
-
-## 🔑 Key Features
-
-### Resume Upload & Processing
-```bash
-POST /api/resume/upload
-```
-- Accepts PDF and DOCX files
-- Extracts text content
-- Returns structured resume data
-
-### Role-Based Evaluation
-```bash
-POST /api/role/evaluate
-```
-- Compares resume against job requirements
-- Provides scoring breakdown
-- Generates AI-powered explanations
-
-### Health Check
-```bash
-GET /health
-```
-- Simple endpoint for monitoring and load balancers
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **Build Tool**: Vite 6.3.5
-- **Language**: TypeScript 5.7.3
-- **Styling**: TailwindCSS 4.1.12
-- **State Management**: React Hooks
-- **Form Handling**: React Hook Form 7.55.0
-- **Charts**: Recharts 2.15.2
-- **Animations**: Framer Motion 12.23.24
-
-### Backend
-- **Web Framework**: FastAPI 0.115.0
-- **ASGI Server**: Uvicorn 0.30.6
-- **AI/LLM**: Groq 0.11.0
-- **Validation**: Pydantic 2.9.2
-- **Environment**: python-dotenv 1.0.1
-
-## 📊 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Root endpoint / frontend SPA |
-| `GET` | `/health` | Health check |
-| `GET` | `/human` | Human-readable service info |
-| `GET` | `/evaluate` | Evaluation page |
-| `POST` | `/api/resume/upload` | Upload and parse resume |
-| `POST` | `/api/role/evaluate` | Evaluate resume against role |
-
-## 🔐 Environment Variables
-
-### Backend (.env)
 ```env
-GROQ_API_KEY=your_groq_api_key_here
-CORS_ORIGINS=http://localhost:5173,https://your-production-domain.com
-PROJECT_NAME=Skill Judge AI
+GROQ_API_KEY=your_groq_api_key
+CORS_ORIGINS=http://localhost:5173
 HOST=0.0.0.0
 PORT=8000
 ```
 
-## 🚢 Deployment
+Notes:
+- `GROQ_API_KEY` is optional. Without it, deterministic evaluation still works.
+- `CORS_ORIGINS` accepts comma-separated values.
 
-The project includes comprehensive deployment documentation:
+## API Endpoints
 
-- `DEPLOYMENT_VERIFICATION.md` - Deployment checklist
-- `RENDER_ENV_SETUP.md` - Render.com configuration
-- `PRODUCTION_CONNECTION_FINAL_REPORT.md` - Production setup guide
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/health` | Service health check |
+| `GET` | `/docs` | Swagger UI |
+| `POST` | `/api/resume/upload` | Upload and evaluate a resume |
+| `POST` | `/api/role/analyze` | Analyze role readiness using `resume_id` |
 
-### Quick Deploy (Render.com)
+## Quick Validation
 
-1. Connect your GitHub repository to Render
-2. Create a new Web Service
-3. Set environment variables (see above)
-4. Deploy with build command: `pip install -r skill-judge-ai-backend/requirements.txt`
-5. Start command: `cd skill-judge-ai-backend && python -m app.main`
+Backend test scripts:
 
-## 🧪 Testing
-
-### Backend Testing
 ```bash
-cd skill-judge-ai-backend
-python create_test_resume.py  # Create test resume
-python send_test_upload.py    # Test upload endpoint
-python test_role_api.py        # Test role evaluation
+cd /home/runner/work/skill-judge-AI/skill-judge-AI/skill-judge-ai-backend
+python create_test_resume.py
+python send_test_upload.py
+python test_role_api.py
 ```
 
-## 📝 License
+Frontend production build:
 
-This project is currently unlicensed. Please add a LICENSE file to specify terms of use.
+```bash
+cd /home/runner/work/skill-judge-AI/skill-judge-AI/Skilljudgeaiuidesign
+pnpm build
+```
 
-## 👥 Contributing
+## Deployment Notes
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+For deployment setup and production diagnostics, refer to:
 
-## 🐛 Issues & Bug Reports
+- `/home/runner/work/skill-judge-AI/skill-judge-AI/DEPLOYMENT_VERIFICATION.md`
+- `/home/runner/work/skill-judge-AI/skill-judge-AI/RENDER_ENV_SETUP.md`
+- `/home/runner/work/skill-judge-AI/skill-judge-AI/PRODUCTION_CONNECTION_FINAL_REPORT.md`
 
-If you encounter any issues, please check the documentation files:
-- `BUG_FIX_SUMMARY.md`
-- `PRODUCTION_BUG_FIX.md`
-- `PRODUCTION_BUG_FIX_VERIFICATION.md`
+## Contributing
 
-## 📧 Contact
-
-For questions or support, please open an issue in this repository.
-
----
-
-**Built with ❤️ for smarter hiring decisions**
+1. Create a feature branch
+2. Keep changes focused and reviewable
+3. Open a pull request with clear testing notes
