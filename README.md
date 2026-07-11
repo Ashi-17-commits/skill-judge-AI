@@ -104,14 +104,16 @@ pnpm build
 
 ## Deployment Notes
 
-For deployment setup and production diagnostics, refer to:
+For deployment setup, refer to:
 
-- `/home/runner/work/skill-judge-AI/skill-judge-AI/DEPLOYMENT_VERIFICATION.md`
 - `/home/runner/work/skill-judge-AI/skill-judge-AI/RENDER_ENV_SETUP.md`
-- `/home/runner/work/skill-judge-AI/skill-judge-AI/PRODUCTION_CONNECTION_FINAL_REPORT.md`
 
 ## Contributing
 
 1. Create a feature branch
 2. Keep changes focused and reviewable
 3. Open a pull request with clear testing notes
+
+## Support
+
+If you encounter issues, open a GitHub issue with reproduction steps and relevant logs.
